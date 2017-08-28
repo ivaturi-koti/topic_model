@@ -1,2 +1,4 @@
 # topic_model
 Topic model to identify different topics that emerge during a credit card breach for an organization
+
+We take two different organizations - Target and Home Depot that were subject to a massive credit card fraud. The premise of this project is based on the idea that Organizations would love to understand and predict customer reaction in response to a specific organizational event. In this case I build a topic model by collecting Facebook comments posted on the respective organizations Facebook pages and build a topic and sentiment model around it. Then, using the labels generated in the topic model as the training set, I build a predictive model that potentially can annotate new incoming posts with the appropriate topic labels and sentiments. This will give organizations power to reprioritize their customer response strategy based on what acteogy (or topic) is emerging as the most impactful point of concern. 
