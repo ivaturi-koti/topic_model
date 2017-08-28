@@ -1,0 +1,121 @@
+library(tm)
+library(ggplot2)
+library(caret)
+library(lattice)
+library(quanteda)
+library(RTextTools)
+
+
+
+
+#-----------------------------Predictive Model------------------------------
+
+
+model.raw<-read.csv("model.raw.csv", stringsAsFactors = FALSE, fileEncoding = "latin1")
+model.raw$topic<-as.factor(model.raw$topic)
+head(model.raw)
+summary(model.raw)
+str(model.raw)
+#prop.table(table(model.raw$Label))
+
+#Lets get a feel for the distribution of text lengths od the messages
+#by adding a new feature for the length of each message
+
+model.raw$TextLength<-nchar(model.raw$message)
+summary(model.raw)
+
+#Create dtm
+doc_matrix<-create_matrix(model.raw$comments.message, language = "english", removeNumbers = FALSE,
+                          stemWords = TRUE, weighting=weightTfIdf)
+
+temp<-model.raw[rowSums(apply(model.raw, 2, nchar))!=0, ]
+
+train.tokens<-tokens(model.raw$message, what = "word",
+                     remove_numbers = TRUE, remove_punct = TRUE,
+                     remove_symbols = TRUE, remove_hyphens = TRUE)
+
+
+#train.tokens[45]
+
+train.tokens<-tokens_tolower(train.tokens)
+train.tokens<-tokens_select(train.tokens, stopwords(), selection="remove")
+train.tokens<-tokens_wordstem(train.tokens, language = "english")
+
+
+container<-create_container(doc_matrix, model.raw$topic, trainSize = 1:15426, testSize =15427:22037, virgin = FALSE)
+container
+
+
+#Training
+SVM <- train_model(container,"SVM")
+GLMNET <- train_model(container,"GLMNET")
+MAXENT <- train_model(container,"MAXENT")
+SLDA <- train_model(container,"SLDA")
+BOOSTING <- train_model(container,"BOOSTING")
+BAGGING <- train_model(container,"BAGGING")
+RF <- train_model(container,"RF")
+NNET <- train_model(container,"NNET")
+TREE <- train_model(container,"TREE")
+
+
+#Classification
+SVM_CLASSIFY <- classify_model(container, SVM)
+GLMNET_CLASSIFY <- classify_model(container, GLMNET)
+MAXENT_CLASSIFY <- classify_model(container, MAXENT)
+SLDA_CLASSIFY <- classify_model(container, SLDA)
+BOOSTING_CLASSIFY <- classify_model(container, BOOSTING)
+BAGGING_CLASSIFY <- classify_model(container, BAGGING)
+RF_CLASSIFY <- classify_model(container, RF)
+NNET_CLASSIFY <- classify_model(container, NNET)
+TREE_CLASSIFY <- classify_model(container, TREE)
+
+
+
+analytics<-create_analytics(container,cbind(SVM_CLASSIFY,MAXENT_CLASSIFY, SLDA_CLASSIFY,
+                                            BOOSTING_CLASSIFY, BAGGING_CLASSIFY, RF_CLASSIFY,NNET_CLASSIFY,TREE_CLASSIFY))
+
+summary(analytics)
+
+write.csv(analytics, file = "analytics.csv")
+create_ensembleSummary(analytics@document_summary)
+
+#Pulling some performance comparision metrics
+doc_summary<-analytics@document_summary
+doc_summary
+analytics@label_summary
+analytics@algorithm_summary
+
+#Run a 10 fold cross validation
+SVM<-cross_validate(container, 10, "RF")
+
+
+
+
+
+
+
+
+
+
+
+boxplot(comments ~ Species, data=iris)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
